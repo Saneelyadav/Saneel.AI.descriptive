@@ -1,1 +1,376 @@
-descriptive.ai
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBPS PO Mains Descriptive Test Practice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
+        }
+        .font-lora {
+            font-family: 'Lora', serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            position: relative;
+        }
+        .logo {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-weight: 700;
+            color: #475569; /* slate-600 */
+            font-size: 1.25rem;
+        }
+        textarea:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* blue-500 with opacity */
+        }
+        .tab-btn {
+            transition: all 0.2s ease-in-out;
+            border-bottom: 4px solid transparent;
+        }
+        .tab-btn.active {
+            border-bottom-color: #3b82f6; /* blue-600 */
+            color: #1e3a8a; /* blue-900 */
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: #3b82f6;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Style for results */
+        #results-screen h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e3a8a; /* blue-900 */
+            border-bottom: 2px solid #e2e8f0; /* slate-200 */
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        #results-screen p, #results-screen li {
+            color: #475569; /* slate-600 */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-6xl mx-auto">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="card p-8 text-center">
+            <div class="logo">Saneel.AI</div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2 font-lora">IBPS PO Mains Descriptive Test</h1>
+            <p class="text-gray-600 mb-4 text-lg">Practice Simulation</p>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto text-left space-y-2">
+                <p><strong>Pattern:</strong> You will get <strong>30 minutes</strong> to answer two sections.</p>
+                <p><strong>1. Essay Writing:</strong> ~250 words</p>
+                <p><strong>2. Reading Comprehension:</strong> 1 Passage with 5 questions</p>
+                <p>Click "Start Test" to begin. The timer will start immediately.</p>
+            </div>
+            <button id="start-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg mt-6">
+                Start Test
+            </button>
+        </div>
+
+        <!-- Test Screen -->
+        <div id="test-screen" class="card hidden">
+            <header class="p-4 bg-gray-50 flex justify-between items-center border-b border-gray-200 rounded-t-lg">
+                <h2 class="text-xl font-bold text-gray-800">Descriptive Test</h2>
+                 <div class="logo !static !top-0 !right-0">Saneel.AI</div>
+                <div id="timer-container" class="bg-red-100 text-red-800 text-lg font-semibold px-4 py-2 rounded-full">
+                    Time Left: <span id="timer">30:00</span>
+                </div>
+            </header>
+            <div class="p-6">
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button id="essay-tab-btn" class="tab-btn active text-lg font-semibold py-2 px-6">Essay Writing</button>
+                    <button id="rc-tab-btn" class="tab-btn text-lg font-semibold py-2 px-6">Reading Comprehension</button>
+                </div>
+                <!-- Essay Section -->
+                <div id="essay-section">
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <p class="font-semibold text-gray-700">Question:</p>
+                        <p id="essay-prompt" class="text-gray-900"></p>
+                    </div>
+                    <textarea id="essay-area" class="w-full h-[30rem] border border-gray-300 rounded-lg p-4 text-gray-700 font-lora text-base resize-none" placeholder="Start writing your essay here..."></textarea>
+                    <p class="text-right text-sm text-gray-500 mt-1">Word Count: <span id="essay-word-count">0</span> / 250</p>
+                </div>
+                <!-- Reading Comprehension Section -->
+                <div id="rc-section" class="hidden h-[33rem] overflow-y-auto pr-2">
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <p class="font-semibold text-gray-700 mb-2">Read the following passage carefully and answer the questions that follow:</p>
+                        <p id="rc-passage" class="text-gray-800 font-lora text-base leading-relaxed"></p>
+                    </div>
+                    <div id="rc-questions-container" class="space-y-4">
+                        <!-- Questions will be injected here by JS -->
+                    </div>
+                </div>
+                <div class="text-center mt-6">
+                    <button id="submit-btn" class="bg-green-600 text-white font-bold py-3 px-12 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                        Submit Test
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="card p-8 text-center hidden">
+             <div class="flex flex-col items-center justify-center h-64">
+                <div class="spinner mb-4"></div>
+                <h2 class="text-2xl font-semibold text-gray-700">Evaluating your responses...</h2>
+                <p class="text-gray-500">Our AI evaluator is checking your essay and comprehension answers.</p>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="card p-8 hidden">
+            <div class="logo">Saneel.AI</div>
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800 font-lora">Your Performance Analysis</h2>
+            
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Essay Analysis -->
+                <section id="essay-analysis-section">
+                    <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Essay Analysis</h2>
+                    <div class="space-y-4">
+                         <div>
+                            <h3>Overall Comments</h3>
+                            <p id="essay-overall-comments"></p>
+                        </div>
+                        <div>
+                            <h3>Format & Structure</h3>
+                            <p id="essay-format-feedback"></p>
+                        </div>
+                        <div>
+                            <h3>Content Relevance</h3>
+                            <p id="essay-content-relevance"></p>
+                        </div>
+                        <div>
+                            <h3>Grammar & Language</h3>
+                            <p id="essay-grammar-language"></p>
+                        </div>
+                         <div>
+                            <h3>Suggestions for Improvement</h3>
+                            <ul id="essay-suggestions" class="list-disc list-inside space-y-1"></ul>
+                        </div>
+                    </div>
+                </section>
+                <!-- Comprehension Analysis -->
+                <section id="rc-analysis-section">
+                    <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Comprehension Analysis</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3>Overall Comprehension Score</h3>
+                            <p id="rc-overall-feedback"></p>
+                        </div>
+                        <div id="rc-answer-feedback-container" class="space-y-3">
+                            <!-- Individual answer feedback here -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="text-center mt-8">
+                <button id="try-again-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg">
+                    Take Another Test
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- DOM Element References ---
+        const startScreen = document.getElementById('start-screen');
+        const testScreen = document.getElementById('test-screen');
+        const loadingScreen = document.getElementById('loading-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        
+        const startBtn = document.getElementById('start-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const tryAgainBtn = document.getElementById('try-again-btn');
+
+        const essayTabBtn = document.getElementById('essay-tab-btn');
+        const rcTabBtn = document.getElementById('rc-tab-btn');
+        const essaySection = document.getElementById('essay-section');
+        const rcSection = document.getElementById('rc-section');
+        
+        const timerEl = document.getElementById('timer');
+        const essayPromptEl = document.getElementById('essay-prompt');
+        const essayArea = document.getElementById('essay-area');
+        const essayWordCountEl = document.getElementById('essay-word-count');
+
+        const rcPassageEl = document.getElementById('rc-passage');
+        const rcQuestionsContainer = document.getElementById('rc-questions-container');
+
+        // --- Results Elements ---
+        const essayOverallComments = document.getElementById('essay-overall-comments');
+        const essayFormatFeedback = document.getElementById('essay-format-feedback');
+        const essayContentRelevance = document.getElementById('essay-content-relevance');
+        const essayGrammarLanguage = document.getElementById('essay-grammar-language');
+        const essaySuggestions = document.getElementById('essay-suggestions');
+        
+        const rcOverallFeedback = document.getElementById('rc-overall-feedback');
+        const rcAnswerFeedbackContainer = document.getElementById('rc-answer-feedback-container');
+
+        // --- App State ---
+        let timerInterval;
+        let currentEssayTopic = '';
+        let currentRC;
+        const TEST_DURATION_SECONDS = 1800; // 30 minutes
+
+        // --- Prompts ---
+        const essayTopics = [
+            "Impact of Artificial Intelligence on the Indian Banking Sector.",
+            "The Gig Economy in India: Pros and Cons.",
+            "Climate Change and its consequences for the Indian Economy.",
+            "The Role of Digital Payments in achieving a Cashless Society.",
+            "Privatization of Public Sector Banks: A Boon or a Bane?",
+        ];
+        
+        const comprehensionPassages = [
+            {
+                passage: "The Reserve Bank of India (RBI) has been the cornerstone of the country's financial system since its establishment in 1935. Its primary objective is to maintain monetary stability, including managing currency and credit systems. The RBI's functions have evolved significantly over the decades. Beyond its traditional role as a monetary authority, it now acts as a regulator and supervisor of the banking and financial systems, a manager of foreign exchange, and a developmental agency promoting financial inclusion. One of the RBI's most critical tools is the monetary policy, through which it influences the supply of money and interest rates to control inflation and stimulate economic growth. The Monetary Policy Committee (MPC), established in 2016, is responsible for fixing the benchmark policy rate (repo rate) required to achieve the inflation target. This shift to an inflation-targeting framework has brought more transparency and accountability to India's monetary policy decisions.",
+                questions: [
+                    "What is the primary objective of the Reserve Bank of India?",
+                    "Name three functions of the RBI beyond its role as a monetary authority.",
+                    "What is the main purpose of the RBI's monetary policy?",
+                    "Which body is responsible for setting the repo rate in India?",
+                    "How has the establishment of the MPC improved India's monetary policy?"
+                ]
+            },
+            {
+                passage: "Financial inclusion is the process of ensuring access to appropriate financial products and services needed by all sections of society, particularly vulnerable groups such as weaker sections and low-income groups, at an affordable cost. In India, the Pradhan Mantri Jan Dhan Yojana (PMJDY), launched in 2014, has been a game-changer in this regard. The scheme has been instrumental in bringing a large portion of the unbanked population into the formal financial system by providing them with a basic savings bank account, access to credit, insurance, and pension services. The linkage of these accounts with Aadhaar and mobile numbers (the Jan Dhan-Aadhaar-Mobile, or JAM trinity) has further enabled the direct transfer of government subsidies and benefits, reducing leakages and corruption. While significant progress has been made, challenges such as low usage of accounts in rural areas and the need for improved financial literacy remain critical for achieving true financial inclusion.",
+                questions: [
+                    "Define 'financial inclusion' in the context of the passage.",
+                    "What is the name of the scheme launched in 2014 to promote financial inclusion?",
+                    "What is the 'JAM trinity' and what has it enabled?",
+                    "According to the passage, what was a major benefit of using the JAM trinity for government schemes?",
+                    "What are two remaining challenges in achieving full financial inclusion in India?"
+                ]
+            }
+        ];
+
+        // --- Event Listeners ---
+        startBtn.addEventListener('click', startTest);
+        submitBtn.addEventListener('click', () => handleSubmit(false));
+        tryAgainBtn.addEventListener('click', resetApp);
+        
+        essayTabBtn.addEventListener('click', () => switchTab('essay'));
+        rcTabBtn.addEventListener('click', () => switchTab('rc'));
+
+        essayArea.addEventListener('input', updateWordCount);
+
+        function switchTab(tab) {
+            if (tab === 'essay') {
+                essaySection.classList.remove('hidden');
+                rcSection.classList.add('hidden');
+                essayTabBtn.classList.add('active');
+                rcTabBtn.classList.remove('active');
+            } else {
+                essaySection.classList.add('hidden');
+                rcSection.classList.remove('hidden');
+                essayTabBtn.classList.remove('active');
+                rcTabBtn.classList.add('active');
+            }
+        }
+
+        function updateWordCount() {
+            const text = essayArea.value;
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+            essayWordCountEl.textContent = words.length;
+
+            submitBtn.disabled = !(essayArea.value.trim().length > 10);
+        }
+        
+        function startTest() {
+            startScreen.classList.add('hidden');
+            testScreen.classList.remove('hidden');
+            
+            // Set up essay
+            currentEssayTopic = essayTopics[Math.floor(Math.random() * essayTopics.length)];
+            essayPromptEl.textContent = currentEssayTopic;
+            
+            // Set up comprehension
+            currentRC = comprehensionPassages[Math.floor(Math.random() * comprehensionPassages.length)];
+            rcPassageEl.textContent = currentRC.passage;
+            rcQuestionsContainer.innerHTML = ''; // Clear previous questions
+            currentRC.questions.forEach((q, index) => {
+                const questionBlock = document.createElement('div');
+                questionBlock.innerHTML = `
+                    <p class="font-semibold text-gray-700 mb-1">Q${index + 1}: ${q}</p>
+                    <textarea id="rc-a${index}" class="w-full h-24 border border-gray-300 rounded-lg p-2 text-gray-700 font-lora text-base resize-none" placeholder="Write your answer for Q${index + 1}..."></textarea>
+                `;
+                rcQuestionsContainer.appendChild(questionBlock);
+            });
+            
+            // Start timer
+            let timeLeft = TEST_DURATION_SECONDS;
+            updateTimerDisplay(timeLeft);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay(timeLeft);
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerEl.textContent = "00:00";
+                    handleSubmit(true); 
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+        }
+
+        async function handleSubmit(isAutoSubmit) {
+            clearInterval(timerInterval);
+            if(isAutoSubmit) {
+                alert("Time's up! Your test is being submitted automatically.");
+            }
+            
+            testScreen.classList.add('hidden');
+            loadingScreen.classList.remove('hidden');
+
+            const essayText = essayArea.value;
+            const rcAnswers = currentRC.questions.map((_, index) => {
+                const answerEl = document.getElementById(`rc-a${index}`);
+                return answerEl ? answerEl.value : "";
+            });
+
+            try {
+                const analysis = await analyzeWithGemini(essayText, currentRC, rcAnswers);
+                displayResults(analysis);
+            } catch (error) {
+                console.error("Error getting analysis:", error);
+                loadingScreen.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+                essayAnalysisSection.innerHTML = `<p class="text-red-500">Could not analyze the essay. Error: ${error.message}</p>`;
+                rcAnalysisSection.innerHTML = `<p class="text-red-500">Could not analyze the comprehension. Error: ${error.message}</p>`;
+            }
+        }
+
+        function displayResults(analysis) {
+            loadingScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+
+            const { essayAnalysis, comprehensionAnalysis } = analysis;
+
+            essayOverallComments.textContent = essayAnalysis.overallComments;
+            essayFormatFeedback.textContent = essayAnalysis.formatFeedback;
+            essayContentRelevance.textContent 
