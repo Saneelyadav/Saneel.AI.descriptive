@@ -42,35 +42,25 @@
             border-bottom-color: #3b82f6; /* blue-600 */
             color: #1e3a8a; /* blue-900 */
         }
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border-left-color: #3b82f6;
-            animation: spin 1s ease infinite;
+        .test-select-btn {
+            transition: all 0.2s ease-in-out;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        #results-screen h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1e3a8a; /* blue-900 */
-            border-bottom: 2px solid #e2e8f0; /* slate-200 */
-            padding-bottom: 0.5rem;
-            margin-bottom: 0.75rem;
-        }
-        #results-screen p, #results-screen li {
-            color: #475569; /* slate-600 */
-        }
-        .error-message {
-            background-color: #fee2e2; /* red-100 */
-            border: 1px solid #fca5a5; /* red-300 */
-            color: #b91c1c; /* red-700 */
-            padding: 1rem;
+        #final-content-display {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f8fafc; /* slate-50 */
+            border: 1px solid #e2e8f0; /* slate-200 */
             border-radius: 0.5rem;
+            padding: 1rem;
+            max-height: 50vh;
+            overflow-y: auto;
+            font-family: 'Lora', serif;
+        }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
         }
     </style>
 </head>
@@ -79,23 +69,30 @@
     <div id="app-container" class="w-full max-w-6xl mx-auto">
         
         <!-- Start Screen -->
-        <div id="start-screen" class="card p-8 text-center">
+        <div id="start-screen" class="screen active card p-8 text-center">
             <div class="logo">Saneel.AI</div>
             <h1 class="text-4xl font-bold text-gray-800 mb-2 font-lora">IBPS PO Mains Descriptive Test</h1>
             <p class="text-gray-600 mb-4 text-lg">Practice Simulation</p>
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto text-left space-y-2">
-                <p><strong>Pattern:</strong> You will get <strong>30 minutes</strong> to answer two sections.</p>
-                <p><strong>1. Essay Writing:</strong> ~250 words</p>
-                <p><strong>2. Reading Comprehension:</strong> 1 Passage with 5 questions</p>
-                <p>Click "Start Test" to begin. The timer will start immediately.</p>
+                <p><strong>Pattern:</strong> 30 minutes for Essay & Reading Comprehension.</p>
+                <p>Click "Proceed" to select a test set.</p>
             </div>
-            <button id="start-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg mt-6">
-                Start Test
+            <button id="proceed-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg mt-6">
+                Proceed
             </button>
         </div>
 
+        <!-- Test Selection Screen -->
+        <div id="test-selection-screen" class="screen card p-8 text-center">
+            <div class="logo">Saneel.AI</div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 font-lora">Select a Practice Test</h2>
+            <div id="test-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Test buttons will be injected here -->
+            </div>
+        </div>
+
         <!-- Test Screen -->
-        <div id="test-screen" class="card hidden">
+        <div id="test-screen" class="screen card">
             <header class="p-4 bg-gray-50 flex justify-between items-center border-b border-gray-200 rounded-t-lg">
                 <h2 class="text-xl font-bold text-gray-800">Descriptive Test</h2>
                  <div class="logo !static !top-0 !right-0">Saneel.AI</div>
@@ -108,204 +105,130 @@
                     <button id="essay-tab-btn" class="tab-btn active text-lg font-semibold py-2 px-6">Essay Writing</button>
                     <button id="rc-tab-btn" class="tab-btn text-lg font-semibold py-2 px-6">Reading Comprehension</button>
                 </div>
-                <!-- Essay Section -->
                 <div id="essay-section">
-                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
-                        <p class="font-semibold text-gray-700">Question:</p>
-                        <p id="essay-prompt" class="text-gray-900"></p>
-                    </div>
-                    <!-- CHANGED: Added spellcheck="false" -->
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4"><p class="font-semibold text-gray-700">Question:</p><p id="essay-prompt" class="text-gray-900"></p></div>
                     <textarea id="essay-area" spellcheck="false" class="w-full h-[30rem] border border-gray-300 rounded-lg p-4 text-gray-700 font-lora text-base resize-none" placeholder="Start writing your essay here..."></textarea>
-                    <p class="text-right text-sm text-gray-500 mt-1">Word Count: <span id="essay-word-count">0</span> / 250</p>
+                    <p class="text-right text-sm text-gray-500 mt-1">Word Count: <span id="essay-word-count">0</span></p>
                 </div>
-                <!-- Reading Comprehension Section -->
                 <div id="rc-section" class="hidden h-[33rem] overflow-y-auto pr-2">
-                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
-                        <p class="font-semibold text-gray-700 mb-2">Read the following passage carefully and answer the questions that follow:</p>
-                        <p id="rc-passage" class="text-gray-800 font-lora text-base leading-relaxed"></p>
-                    </div>
-                    <div id="rc-questions-container" class="space-y-4">
-                        <!-- Questions will be injected here by JS -->
-                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4"><p class="font-semibold text-gray-700 mb-2">Read the following passage carefully and answer the questions that follow:</p><p id="rc-passage" class="text-gray-800 font-lora text-base leading-relaxed"></p></div>
+                    <div id="rc-questions-container" class="space-y-4"></div>
                 </div>
                 <div class="text-center mt-6">
-                    <button id="submit-btn" class="bg-green-600 text-white font-bold py-3 px-12 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                        Submit Test
-                    </button>
+                    <button id="submit-btn" class="bg-green-600 text-white font-bold py-3 px-12 rounded-lg hover:bg-green-700 transition-colors shadow-md text-lg disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Submit Test</button>
                 </div>
             </div>
         </div>
         
-        <!-- Loading Screen -->
-        <div id="loading-screen" class="card p-8 text-center hidden">
-             <div class="flex flex-col items-center justify-center h-64">
-                <div class="spinner mb-4"></div>
-                <h2 class="text-2xl font-semibold text-gray-700">Evaluating your responses...</h2>
-                <p class="text-gray-500">Our AI evaluator is checking your essay and comprehension answers.</p>
-            </div>
-        </div>
-
-        <!-- Results Screen -->
-        <div id="results-screen" class="card p-8 hidden">
+        <!-- Copy Content Screen -->
+        <div id="copy-content-screen" class="screen card p-8">
             <div class="logo">Saneel.AI</div>
-            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800 font-lora">Your Performance Analysis</h2>
-            
-            <!-- This container will show EITHER the results OR an error -->
-            <div id="results-content-container">
-                 <div class="grid lg:grid-cols-2 gap-8">
-                    <!-- Essay Analysis -->
-                    <section id="essay-analysis-section">
-                        <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Essay Analysis</h2>
-                        <div class="space-y-4">
-                            <div><h3>Overall Comments</h3><p id="essay-overall-comments"></p></div>
-                            <div><h3>Format & Structure</h3><p id="essay-format-feedback"></p></div>
-                            <div><h3>Content Relevance</h3><p id="essay-content-relevance"></p></div>
-                            <div><h3>Grammar & Language</h3><p id="essay-grammar-language"></p></div>
-                            <div><h3>Suggestions for Improvement</h3><ul id="essay-suggestions" class="list-disc list-inside space-y-1"></ul></div>
-                        </div>
-                    </section>
-                    <!-- Comprehension Analysis -->
-                    <section id="rc-analysis-section">
-                        <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Comprehension Analysis</h2>
-                        <div class="space-y-4">
-                            <div><h3>Overall Comprehension Score</h3><p id="rc-overall-feedback"></p></div>
-                            <div id="rc-answer-feedback-container" class="space-y-3"></div>
-                        </div>
-                    </section>
-                </div>
-            </div>
-
-            <div class="text-center mt-8">
-                <button id="try-again-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg">
-                    Take Another Test
-                </button>
+            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800 font-lora">Test Submitted Successfully</h2>
+            <p class="text-center text-gray-600 mb-6">Copy your responses below to analyze them with an external tool.</p>
+            <pre id="final-content-display"></pre>
+            <div class="flex justify-center items-center gap-4 mt-8">
+                <button id="copy-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg">Copy to Clipboard</button>
+                <button id="try-again-btn" class="bg-gray-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-700 transition-colors shadow-md text-lg">Take Another Test</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         // --- DOM Element References ---
-        const startScreen = document.getElementById('start-screen');
-        const testScreen = document.getElementById('test-screen');
-        const loadingScreen = document.getElementById('loading-screen');
-        const resultsScreen = document.getElementById('results-screen');
-        const resultsContentContainer = document.getElementById('results-content-container');
-        
-        const startBtn = document.getElementById('start-btn');
+        const screens = document.querySelectorAll('.screen');
+        const proceedBtn = document.getElementById('proceed-btn');
+        const testListContainer = document.getElementById('test-list-container');
         const submitBtn = document.getElementById('submit-btn');
         const tryAgainBtn = document.getElementById('try-again-btn');
-
+        const copyBtn = document.getElementById('copy-btn');
+        const finalContentDisplay = document.getElementById('final-content-display');
         const essayTabBtn = document.getElementById('essay-tab-btn');
         const rcTabBtn = document.getElementById('rc-tab-btn');
         const essaySection = document.getElementById('essay-section');
         const rcSection = document.getElementById('rc-section');
-        
         const timerEl = document.getElementById('timer');
         const essayPromptEl = document.getElementById('essay-prompt');
         const essayArea = document.getElementById('essay-area');
         const essayWordCountEl = document.getElementById('essay-word-count');
-
         const rcPassageEl = document.getElementById('rc-passage');
         const rcQuestionsContainer = document.getElementById('rc-questions-container');
 
-        // --- Results Elements ---
-        const essayAnalysisSection = document.getElementById('essay-analysis-section');
-        const rcAnalysisSection = document.getElementById('rc-analysis-section');
-        const essayOverallComments = document.getElementById('essay-overall-comments');
-        const essayFormatFeedback = document.getElementById('essay-format-feedback');
-        const essayContentRelevance = document.getElementById('essay-content-relevance');
-        const essayGrammarLanguage = document.getElementById('essay-grammar-language');
-        const essaySuggestions = document.getElementById('essay-suggestions');
-        
-        const rcOverallFeedback = document.getElementById('rc-overall-feedback');
-        const rcAnswerFeedbackContainer = document.getElementById('rc-answer-feedback-container');
-
         // --- App State ---
         let timerInterval;
-        let currentEssayTopic = '';
-        let currentRC;
+        let currentTestSet;
         const TEST_DURATION_SECONDS = 1800; // 30 minutes
 
-        // --- Prompts ---
-        const essayTopics = [
-            "Impact of Artificial Intelligence on the Indian Banking Sector.",
-            "The Gig Economy in India: Pros and Cons.",
-            "Climate Change and its consequences for the Indian Economy.",
-            "The Role of Digital Payments in achieving a Cashless Society.",
-            "Privatization of Public Sector Banks: A Boon or a Bane?",
+        // --- All Test Content (UPDATED with 5 questions each) ---
+        const testSets = [
+            { name: "Test 1", essayTopic: "Impact of Artificial Intelligence on the Indian Banking Sector.", comprehension: { passage: "The Reserve Bank of India (RBI) has been the cornerstone of the country's financial system since its establishment in 1935. Its primary objective is to maintain monetary stability. Beyond its traditional role, it now acts as a regulator and supervisor of the banking and financial systems, a manager of foreign exchange, and a developmental agency promoting financial inclusion. One of the RBI's most critical tools is the monetary policy, through which it influences interest rates to control inflation and stimulate economic growth.", questions: ["What is the primary objective of the RBI?", "Name three functions of the RBI beyond its traditional role.", "What is the main purpose of the RBI's monetary policy?", "How does the RBI promote financial inclusion according to the passage?", "When was the RBI established?"] }},
+            { name: "Test 2", essayTopic: "The Gig Economy in India: Pros and Cons.", comprehension: { passage: "Financial inclusion is ensuring access to appropriate financial products for all sections of society, particularly vulnerable groups. In India, the Pradhan Mantri Jan Dhan Yojana (PMJDY), launched in 2014, has been a game-changer. The scheme brought a large portion of the unbanked population into the formal financial system by providing a basic savings bank account, and access to credit and insurance. While progress has been made, challenges such as low account usage in rural areas and the need for financial literacy remain.", questions: ["Define 'financial inclusion' based on the passage.", "What scheme was launched in 2014 to promote financial inclusion?", "What are two remaining challenges in achieving full financial inclusion?", "What specific services are provided through the PMJDY scheme?", "Which groups are specifically mentioned as vulnerable?"] }},
+            { name: "Test 3", essayTopic: "The Role of Digital Payments in achieving a Cashless Society.", comprehension: { passage: "The Monetary Policy Committee (MPC), established in 2016, is responsible for fixing the benchmark policy rate (repo rate) required to achieve the inflation target. This shift to an inflation-targeting framework has brought more transparency and accountability to India's monetary policy decisions. The committee comprises six members: three from the RBI and three appointed by the central government. Decisions are made by majority vote, with the RBI Governor having a casting vote in case of a tie.", questions: ["What is the primary responsibility of the MPC?", "How has the MPC framework improved India's monetary policy?", "How are decisions made in the MPC, especially in case of a tie?", "When was the MPC established?", "What is the composition of the MPC in terms of its members?"] }},
+            { name: "Test 4", essayTopic: "Privatization of Public Sector Banks: A Boon or a Bane?", comprehension: { passage: "Non-Performing Assets (NPAs) are loans or advances for which the principal or interest payment remained overdue for a period of 90 days. A high level of NPAs affects a bank's profitability and can erode its capital base. The Insolvency and Bankruptcy Code (IBC) was enacted in 2016 to create a consolidated framework that would resolve insolvency in a time-bound manner. The IBC has been a significant step in cleaning up the balance sheets of Indian banks and improving the credit culture.", questions: ["What is a Non-Performing Asset (NPA)?", "How does a high level of NPAs impact a bank?", "What was the purpose of enacting the Insolvency and Bankruptcy Code (IBC)?", "What is the time period after which a loan is classified as an NPA?", "What has been a significant outcome of the IBC according to the passage?"] }}
         ];
-        
-        const comprehensionPassages = [
-            {
-                passage: "The Reserve Bank of India (RBI) has been the cornerstone of the country's financial system since its establishment in 1935. Its primary objective is to maintain monetary stability, including managing currency and credit systems. The RBI's functions have evolved significantly over the decades. Beyond its traditional role as a monetary authority, it now acts as a regulator and supervisor of the banking and financial systems, a manager of foreign exchange, and a developmental agency promoting financial inclusion. One of the RBI's most critical tools is the monetary policy, through which it influences the supply of money and interest rates to control inflation and stimulate economic growth. The Monetary Policy Committee (MPC), established in 2016, is responsible for fixing the benchmark policy rate (repo rate) required to achieve the inflation target. This shift to an inflation-targeting framework has brought more transparency and accountability to India's monetary policy decisions.",
-                questions: [
-                    "What is the primary objective of the Reserve Bank of India?",
-                    "Name three functions of the RBI beyond its role as a monetary authority.",
-                    "What is the main purpose of the RBI's monetary policy?",
-                    "Which body is responsible for setting the repo rate in India?",
-                    "How has the establishment of the MPC improved India's monetary policy?"
-                ]
-            },
-            {
-                passage: "Financial inclusion is the process of ensuring access to appropriate financial products and services needed by all sections of society, particularly vulnerable groups such as weaker sections and low-income groups, at an affordable cost. In India, the Pradhan Mantri Jan Dhan Yojana (PMJDY), launched in 2014, has been a game-changer in this regard. The scheme has been instrumental in bringing a large portion of the unbanked population into the formal financial system by providing them with a basic savings bank account, access to credit, insurance, and pension services. The linkage of these accounts with Aadhaar and mobile numbers (the Jan Dhan-Aadhaar-Mobile, or JAM trinity) has further enabled the direct transfer of government subsidies and benefits, reducing leakages and corruption. While significant progress has been made, challenges such as low usage of accounts in rural areas and the need for improved financial literacy remain critical for achieving true financial inclusion.",
-                questions: [
-                    "Define 'financial inclusion' in the context of the passage.",
-                    "What is the name of the scheme launched in 2014 to promote financial inclusion?",
-                    "What is the 'JAM trinity' and what has it enabled?",
-                    "According to the passage, what was a major benefit of using the JAM trinity for government schemes?",
-                    "What are two remaining challenges in achieving full financial inclusion in India?"
-                ]
-            }
-        ];
+
+        // --- Central function to manage screen visibility ---
+        function showScreen(screenId) {
+            screens.forEach(screen => {
+                screen.classList.toggle('active', screen.id === screenId);
+            });
+        }
 
         // --- Event Listeners ---
-        startBtn.addEventListener('click', startTest);
+        proceedBtn.addEventListener('click', () => showScreen('test-selection-screen'));
         submitBtn.addEventListener('click', () => handleSubmit(false));
         tryAgainBtn.addEventListener('click', resetApp);
-        
+        copyBtn.addEventListener('click', copyContentToClipboard);
         essayTabBtn.addEventListener('click', () => switchTab('essay'));
         rcTabBtn.addEventListener('click', () => switchTab('rc'));
+        essayArea.addEventListener('input', () => {
+            updateWordCount();
+            updateSubmitButtonState();
+        });
 
-        essayArea.addEventListener('input', updateWordCount);
-
-        function switchTab(tab) {
-            if (tab === 'essay') {
-                essaySection.classList.remove('hidden');
-                rcSection.classList.add('hidden');
-                essayTabBtn.classList.add('active');
-                rcTabBtn.classList.remove('active');
-            } else {
-                essaySection.classList.add('hidden');
-                rcSection.classList.remove('hidden');
-                essayTabBtn.classList.remove('active');
-                rcTabBtn.classList.add('active');
-            }
+        function populateTestSelection() {
+            testListContainer.innerHTML = '';
+            testSets.forEach((test, index) => {
+                const button = document.createElement('button');
+                button.className = "test-select-btn bg-white hover:bg-blue-50 border-2 border-blue-200 text-blue-800 font-semibold py-6 px-4 rounded-lg shadow-sm";
+                button.textContent = test.name;
+                button.onclick = () => startTest(index);
+                testListContainer.appendChild(button);
+            });
         }
 
-        function updateWordCount() {
-            const text = essayArea.value;
-            const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-            essayWordCountEl.textContent = words.length;
-            submitBtn.disabled = !(essayArea.value.trim().length > 10);
-        }
-        
-        function startTest() {
-            startScreen.classList.add('hidden');
-            testScreen.classList.remove('hidden');
+        // --- UPDATED: This function is changed to include word counters ---
+        function startTest(testIndex) {
+            currentTestSet = testSets[testIndex];
             
-            currentEssayTopic = essayTopics[Math.floor(Math.random() * essayTopics.length)];
-            essayPromptEl.textContent = currentEssayTopic;
+            showScreen('test-screen');
             
-            currentRC = comprehensionPassages[Math.floor(Math.random() * comprehensionPassages.length)];
-            rcPassageEl.textContent = currentRC.passage;
+            essayPromptEl.textContent = currentTestSet.essayTopic;
+            rcPassageEl.textContent = currentTestSet.comprehension.passage;
             rcQuestionsContainer.innerHTML = '';
-            currentRC.questions.forEach((q, index) => {
+            currentTestSet.comprehension.questions.forEach((q, index) => {
                 const questionBlock = document.createElement('div');
-                // CHANGED: Added spellcheck="false" to each textarea
-                questionBlock.innerHTML = `
-                    <p class="font-semibold text-gray-700 mb-1">Q${index + 1}: ${q}</p>
-                    <textarea id="rc-a${index}" spellcheck="false" class="w-full h-24 border border-gray-300 rounded-lg p-2 text-gray-700 font-lora text-base resize-none" placeholder="Write your answer for Q${index + 1}..."></textarea>
-                `;
+                
+                const questionText = document.createElement('p');
+                questionText.className = "font-semibold text-gray-700 mb-1";
+                questionText.textContent = `Q${index + 1}: ${q}`;
+                
+                const textArea = document.createElement('textarea');
+                textArea.id = `rc-a${index}`;
+                textArea.spellcheck = false;
+                textArea.className = "w-full h-24 border border-gray-300 rounded-lg p-2 text-gray-700 font-lora text-base resize-none";
+                textArea.placeholder = `Write your answer for Q${index + 1}...`;
+                textArea.addEventListener('input', () => {
+                    updateRcWordCount(index);
+                    updateSubmitButtonState();
+                });
+
+                const wordCountContainer = document.createElement('div');
+                wordCountContainer.className = 'text-right text-sm text-gray-500 mt-1';
+                wordCountContainer.innerHTML = `Word Count: <span id="rc-word-count-${index}">0</span>`;
+
+                questionBlock.appendChild(questionText);
+                questionBlock.appendChild(textArea);
+                questionBlock.appendChild(wordCountContainer);
                 rcQuestionsContainer.appendChild(questionBlock);
             });
             
@@ -321,170 +244,99 @@
                 }
             }, 1000);
         }
-
+        
         function updateTimerDisplay(seconds) {
             const minutes = Math.floor(seconds / 60);
             const remainingSeconds = seconds % 60;
             timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
         }
-        
-        // --- CHANGED: Rewritten handleSubmit for better error handling ---
-        async function handleSubmit(isAutoSubmit) {
+
+        function handleSubmit(isAutoSubmit) {
             clearInterval(timerInterval);
-            if(isAutoSubmit) {
-                // Using a non-blocking notification instead of alert
-                console.log("Time's up! Your test is being submitted automatically.");
-            }
-            
-            testScreen.classList.add('hidden');
-            loadingScreen.classList.remove('hidden');
+            if(isAutoSubmit) console.log("Time's up! Submitting automatically.");
 
             const essayText = essayArea.value;
-            const rcAnswers = currentRC.questions.map((_, index) => {
-                return document.getElementById(`rc-a${index}`).value || "";
-            });
+            const rcPassage = currentTestSet.comprehension.passage;
+            const rcAnswers = currentTestSet.comprehension.questions.map((q, index) => {
+                const answerText = document.getElementById(`rc-a${index}`).value;
+                return `Question ${index + 1}: ${q}\nAnswer: ${answerText || 'Not Answered'}`;
+            }).join('\n\n');
 
+            const fullContent = `IBPS PO Mains Descriptive Practice\n================================\n\nEssay Topic:\n${currentTestSet.essayTopic}\n\nMy Essay:\n${essayText || 'Not Answered'}\n\n================================\n\nReading Comprehension Passage:\n${rcPassage}\n\nMy Answers:\n${rcAnswers}\n`;
+            
+            finalContentDisplay.textContent = fullContent;
+            showScreen('copy-content-screen');
+        }
+
+        function copyContentToClipboard() {
+            const textToCopy = finalContentDisplay.textContent;
+            const textArea = document.createElement("textarea");
+            textArea.style.position = 'fixed';
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
             try {
-                const analysis = await analyzeWithGemini(essayText, currentRC, rcAnswers);
-                displayResults(analysis);
-            } catch (error) {
-                console.error("Critical Error during analysis:", error);
-                displayError(error);
+                document.execCommand('copy');
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.replace('bg-blue-600', 'bg-green-600');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy to Clipboard';
+                    copyBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                }, 2000);
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
             }
-        }
-
-        function displayResults(analysis) {
-            loadingScreen.classList.add('hidden');
-            essayAnalysisSection.classList.remove('hidden');
-            rcAnalysisSection.classList.remove('hidden');
-            resultsScreen.classList.remove('hidden');
-
-            const { essayAnalysis, comprehensionAnalysis } = analysis;
-
-            essayOverallComments.textContent = essayAnalysis.overallComments;
-            essayFormatFeedback.textContent = essayAnalysis.formatFeedback;
-            essayContentRelevance.textContent = essayAnalysis.contentRelevance;
-            essayGrammarLanguage.textContent = essayAnalysis.grammarAndLanguage;
-            essaySuggestions.innerHTML = essayAnalysis.suggestionsForImprovement.map(s => `<li>${s}</li>`).join('');
-            
-            rcOverallFeedback.textContent = comprehensionAnalysis.overallComprehensionFeedback;
-            rcAnswerFeedbackContainer.innerHTML = '';
-            comprehensionAnalysis.answerAnalyses.forEach((ans, index) => {
-                const feedbackEl = document.createElement('div');
-                feedbackEl.className = "bg-gray-50 p-3 rounded-lg";
-                feedbackEl.innerHTML = `<p class="font-semibold text-gray-800">Feedback for Q${index + 1}:</p><p class="text-sm">${ans.feedback}</p>`;
-                rcAnswerFeedbackContainer.appendChild(feedbackEl);
-            });
-        }
-
-        // --- NEW: Function to display an error message on the results screen ---
-        function displayError(error) {
-            loadingScreen.classList.add('hidden');
-            resultsScreen.classList.remove('hidden');
-            
-            // Hide the normal result sections
-            essayAnalysisSection.classList.add('hidden');
-            rcAnalysisSection.classList.add('hidden');
-
-            // Show an error message
-            resultsContentContainer.innerHTML = `
-                <div class="error-message">
-                    <h3 class="font-bold text-lg mb-2">Analysis Failed</h3>
-                    <p>Sorry, there was a problem evaluating your test. This could be a network issue or a temporary problem with the AI service.</p>
-                    <p class="mt-2 text-sm"><strong>Details:</strong> ${error.message}</p>
-                    <p class="mt-3">Please try taking the test again.</p>
-                </div>
-            `;
+            document.body.removeChild(textArea);
         }
         
         function resetApp() {
-            // Restore original results content structure if it was replaced by an error
-            resultsContentContainer.innerHTML = `
-                 <div class="grid lg:grid-cols-2 gap-8">
-                    <section id="essay-analysis-section">
-                        <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Essay Analysis</h2>
-                        <div class="space-y-4">
-                            <div><h3>Overall Comments</h3><p id="essay-overall-comments"></p></div>
-                            <div><h3>Format & Structure</h3><p id="essay-format-feedback"></p></div>
-                            <div><h3>Content Relevance</h3><p id="essay-content-relevance"></p></div>
-                            <div><h3>Grammar & Language</h3><p id="essay-grammar-language"></p></div>
-                            <div><h3>Suggestions for Improvement</h3><ul id="essay-suggestions" class="list-disc list-inside space-y-1"></ul></div>
-                        </div>
-                    </section>
-                    <section id="rc-analysis-section">
-                        <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Comprehension Analysis</h2>
-                        <div class="space-y-4">
-                            <div><h3>Overall Comprehension Score</h3><p id="rc-overall-feedback"></p></div>
-                            <div id="rc-answer-feedback-container" class="space-y-3"></div>
-                        </div>
-                    </section>
-                </div>
-            `;
-            
-            resultsScreen.classList.add('hidden');
-            startScreen.classList.remove('hidden');
+            showScreen('start-screen');
             essayArea.value = '';
             updateWordCount();
             switchTab('essay');
             submitBtn.disabled = true;
         }
-
-        async function analyzeWithGemini(essayText, rcData, rcAnswers) {
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-            const systemPrompt = `You are a strict and expert evaluator for the IBPS PO Mains Descriptive English paper. Your task is to analyze a user's essay and their answers to a reading comprehension passage. Provide constructive feedback based on standard exam criteria. You MUST respond in a valid JSON format only. For comprehension, evaluate each answer based on the provided passage for correctness and clarity.`;
-
-            const rcAnswersText = rcData.questions.map((q, i) => `Question ${i+1}: ${q}\nAnswer ${i+1}: ${rcAnswers[i]}`).join('\n\n');
-
-            const userQuery = `
-                **ESSAY**
-                Topic: "${currentEssayTopic}"
-                Text:
-                ---
-                ${essayText}
-                ---
-
-                **READING COMPREHENSION**
-                Passage: "${rcData.passage}"
-                
-                Questions & User's Answers:
-                ---
-                ${rcAnswersText}
-                ---
-            `;
-            
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            essayAnalysis: { type: "OBJECT", properties: { formatFeedback: { type: "STRING" }, contentRelevance: { type: "STRING" }, grammarAndLanguage: { type: "STRING" }, suggestionsForImprovement: { type: "ARRAY", items: { type: "STRING" } }, overallComments: { type: "STRING" } } },
-                            comprehensionAnalysis: { type: "OBJECT", properties: { overallComprehensionFeedback: { type: "STRING" }, answerAnalyses: { type: "ARRAY", items: { type: "OBJECT", properties: { feedback: { type: "STRING" } } } } } }
-                        }
+        
+        function switchTab(tab) {
+            essaySection.classList.toggle('hidden', tab !== 'essay');
+            rcSection.classList.toggle('hidden', tab === 'essay');
+            essayTabBtn.classList.toggle('active', tab === 'essay');
+            rcTabBtn.classList.toggle('active', tab !== 'essay');
+        }
+        
+        function updateSubmitButtonState() {
+            let hasContent = document.getElementById('essay-area').value.trim().length > 0;
+            if (!hasContent) {
+                const rcTextareas = rcQuestionsContainer.querySelectorAll('textarea');
+                for (const ta of rcTextareas) {
+                    if (ta.value.trim().length > 0) {
+                        hasContent = true;
+                        break;
                     }
                 }
-            };
-            
-            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`API response was not OK: ${response.status} ${response.statusText}. Body: ${errorBody}`);
             }
-
-            const result = await response.json();
-            
-            if (!result.candidates || !result.candidates[0].content.parts[0].text) {
-                throw new Error("Invalid response structure from API. No content found.");
-            }
-
-            const jsonText = result.candidates[0].content.parts[0].text;
-            return JSON.parse(jsonText);
+            submitBtn.disabled = !hasContent;
         }
+
+        function updateWordCount() {
+            const words = essayArea.value.trim().split(/\s+/).filter(word => word.length > 0);
+            essayWordCountEl.textContent = words.length;
+        }
+
+        // --- NEW: Function to update word count for RC answers ---
+        function updateRcWordCount(index) {
+            const textArea = document.getElementById(`rc-a${index}`);
+            const wordCountEl = document.getElementById(`rc-word-count-${index}`);
+            if (textArea && wordCountEl) {
+                const words = textArea.value.trim().split(/\s+/).filter(word => word.length > 0);
+                wordCountEl.textContent = words.length;
+            }
+        }
+
+        // --- Initial Setup ---
+        populateTestSelection();
+        showScreen('start-screen');
     </script>
 </body>
 </html>
