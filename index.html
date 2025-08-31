@@ -54,7 +54,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Style for results */
         #results-screen h3 {
             font-size: 1.25rem;
             font-weight: 600;
@@ -65,6 +64,13 @@
         }
         #results-screen p, #results-screen li {
             color: #475569; /* slate-600 */
+        }
+        .error-message {
+            background-color: #fee2e2; /* red-100 */
+            border: 1px solid #fca5a5; /* red-300 */
+            color: #b91c1c; /* red-700 */
+            padding: 1rem;
+            border-radius: 0.5rem;
         }
     </style>
 </head>
@@ -108,7 +114,8 @@
                         <p class="font-semibold text-gray-700">Question:</p>
                         <p id="essay-prompt" class="text-gray-900"></p>
                     </div>
-                    <textarea id="essay-area" class="w-full h-[30rem] border border-gray-300 rounded-lg p-4 text-gray-700 font-lora text-base resize-none" placeholder="Start writing your essay here..."></textarea>
+                    <!-- CHANGED: Added spellcheck="false" -->
+                    <textarea id="essay-area" spellcheck="false" class="w-full h-[30rem] border border-gray-300 rounded-lg p-4 text-gray-700 font-lora text-base resize-none" placeholder="Start writing your essay here..."></textarea>
                     <p class="text-right text-sm text-gray-500 mt-1">Word Count: <span id="essay-word-count">0</span> / 250</p>
                 </div>
                 <!-- Reading Comprehension Section -->
@@ -143,46 +150,29 @@
             <div class="logo">Saneel.AI</div>
             <h2 class="text-3xl font-bold text-center mb-6 text-gray-800 font-lora">Your Performance Analysis</h2>
             
-            <div class="grid lg:grid-cols-2 gap-8">
-                <!-- Essay Analysis -->
-                <section id="essay-analysis-section">
-                    <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Essay Analysis</h2>
-                    <div class="space-y-4">
-                         <div>
-                            <h3>Overall Comments</h3>
-                            <p id="essay-overall-comments"></p>
+            <!-- This container will show EITHER the results OR an error -->
+            <div id="results-content-container">
+                 <div class="grid lg:grid-cols-2 gap-8">
+                    <!-- Essay Analysis -->
+                    <section id="essay-analysis-section">
+                        <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Essay Analysis</h2>
+                        <div class="space-y-4">
+                            <div><h3>Overall Comments</h3><p id="essay-overall-comments"></p></div>
+                            <div><h3>Format & Structure</h3><p id="essay-format-feedback"></p></div>
+                            <div><h3>Content Relevance</h3><p id="essay-content-relevance"></p></div>
+                            <div><h3>Grammar & Language</h3><p id="essay-grammar-language"></p></div>
+                            <div><h3>Suggestions for Improvement</h3><ul id="essay-suggestions" class="list-disc list-inside space-y-1"></ul></div>
                         </div>
-                        <div>
-                            <h3>Format & Structure</h3>
-                            <p id="essay-format-feedback"></p>
+                    </section>
+                    <!-- Comprehension Analysis -->
+                    <section id="rc-analysis-section">
+                        <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Comprehension Analysis</h2>
+                        <div class="space-y-4">
+                            <div><h3>Overall Comprehension Score</h3><p id="rc-overall-feedback"></p></div>
+                            <div id="rc-answer-feedback-container" class="space-y-3"></div>
                         </div>
-                        <div>
-                            <h3>Content Relevance</h3>
-                            <p id="essay-content-relevance"></p>
-                        </div>
-                        <div>
-                            <h3>Grammar & Language</h3>
-                            <p id="essay-grammar-language"></p>
-                        </div>
-                         <div>
-                            <h3>Suggestions for Improvement</h3>
-                            <ul id="essay-suggestions" class="list-disc list-inside space-y-1"></ul>
-                        </div>
-                    </div>
-                </section>
-                <!-- Comprehension Analysis -->
-                <section id="rc-analysis-section">
-                    <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Comprehension Analysis</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <h3>Overall Comprehension Score</h3>
-                            <p id="rc-overall-feedback"></p>
-                        </div>
-                        <div id="rc-answer-feedback-container" class="space-y-3">
-                            <!-- Individual answer feedback here -->
-                        </div>
-                    </div>
-                </section>
+                    </section>
+                </div>
             </div>
 
             <div class="text-center mt-8">
@@ -199,6 +189,7 @@
         const testScreen = document.getElementById('test-screen');
         const loadingScreen = document.getElementById('loading-screen');
         const resultsScreen = document.getElementById('results-screen');
+        const resultsContentContainer = document.getElementById('results-content-container');
         
         const startBtn = document.getElementById('start-btn');
         const submitBtn = document.getElementById('submit-btn');
@@ -218,6 +209,8 @@
         const rcQuestionsContainer = document.getElementById('rc-questions-container');
 
         // --- Results Elements ---
+        const essayAnalysisSection = document.getElementById('essay-analysis-section');
+        const rcAnalysisSection = document.getElementById('rc-analysis-section');
         const essayOverallComments = document.getElementById('essay-overall-comments');
         const essayFormatFeedback = document.getElementById('essay-format-feedback');
         const essayContentRelevance = document.getElementById('essay-content-relevance');
@@ -293,7 +286,6 @@
             const text = essayArea.value;
             const words = text.trim().split(/\s+/).filter(word => word.length > 0);
             essayWordCountEl.textContent = words.length;
-
             submitBtn.disabled = !(essayArea.value.trim().length > 10);
         }
         
@@ -301,24 +293,22 @@
             startScreen.classList.add('hidden');
             testScreen.classList.remove('hidden');
             
-            // Set up essay
             currentEssayTopic = essayTopics[Math.floor(Math.random() * essayTopics.length)];
             essayPromptEl.textContent = currentEssayTopic;
             
-            // Set up comprehension
             currentRC = comprehensionPassages[Math.floor(Math.random() * comprehensionPassages.length)];
             rcPassageEl.textContent = currentRC.passage;
-            rcQuestionsContainer.innerHTML = ''; // Clear previous questions
+            rcQuestionsContainer.innerHTML = '';
             currentRC.questions.forEach((q, index) => {
                 const questionBlock = document.createElement('div');
+                // CHANGED: Added spellcheck="false" to each textarea
                 questionBlock.innerHTML = `
                     <p class="font-semibold text-gray-700 mb-1">Q${index + 1}: ${q}</p>
-                    <textarea id="rc-a${index}" class="w-full h-24 border border-gray-300 rounded-lg p-2 text-gray-700 font-lora text-base resize-none" placeholder="Write your answer for Q${index + 1}..."></textarea>
+                    <textarea id="rc-a${index}" spellcheck="false" class="w-full h-24 border border-gray-300 rounded-lg p-2 text-gray-700 font-lora text-base resize-none" placeholder="Write your answer for Q${index + 1}..."></textarea>
                 `;
                 rcQuestionsContainer.appendChild(questionBlock);
             });
             
-            // Start timer
             let timeLeft = TEST_DURATION_SECONDS;
             updateTimerDisplay(timeLeft);
             timerInterval = setInterval(() => {
@@ -337,11 +327,13 @@
             const remainingSeconds = seconds % 60;
             timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
         }
-
+        
+        // --- CHANGED: Rewritten handleSubmit for better error handling ---
         async function handleSubmit(isAutoSubmit) {
             clearInterval(timerInterval);
             if(isAutoSubmit) {
-                alert("Time's up! Your test is being submitted automatically.");
+                // Using a non-blocking notification instead of alert
+                console.log("Time's up! Your test is being submitted automatically.");
             }
             
             testScreen.classList.add('hidden');
@@ -349,24 +341,22 @@
 
             const essayText = essayArea.value;
             const rcAnswers = currentRC.questions.map((_, index) => {
-                const answerEl = document.getElementById(`rc-a${index}`);
-                return answerEl ? answerEl.value : "";
+                return document.getElementById(`rc-a${index}`).value || "";
             });
 
             try {
                 const analysis = await analyzeWithGemini(essayText, currentRC, rcAnswers);
                 displayResults(analysis);
             } catch (error) {
-                console.error("Error getting analysis:", error);
-                loadingScreen.classList.add('hidden');
-                resultsScreen.classList.remove('hidden');
-                essayAnalysisSection.innerHTML = `<p class="text-red-500">Could not analyze the essay. Error: ${error.message}</p>`;
-                rcAnalysisSection.innerHTML = `<p class="text-red-500">Could not analyze the comprehension. Error: ${error.message}</p>`;
+                console.error("Critical Error during analysis:", error);
+                displayError(error);
             }
         }
 
         function displayResults(analysis) {
             loadingScreen.classList.add('hidden');
+            essayAnalysisSection.classList.remove('hidden');
+            rcAnalysisSection.classList.remove('hidden');
             resultsScreen.classList.remove('hidden');
 
             const { essayAnalysis, comprehensionAnalysis } = analysis;
@@ -382,15 +372,55 @@
             comprehensionAnalysis.answerAnalyses.forEach((ans, index) => {
                 const feedbackEl = document.createElement('div');
                 feedbackEl.className = "bg-gray-50 p-3 rounded-lg";
-                feedbackEl.innerHTML = `
-                    <p class="font-semibold text-gray-800">Feedback for Q${index + 1}:</p>
-                    <p class="text-sm">${ans.feedback}</p>
-                `;
+                feedbackEl.innerHTML = `<p class="font-semibold text-gray-800">Feedback for Q${index + 1}:</p><p class="text-sm">${ans.feedback}</p>`;
                 rcAnswerFeedbackContainer.appendChild(feedbackEl);
             });
         }
+
+        // --- NEW: Function to display an error message on the results screen ---
+        function displayError(error) {
+            loadingScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+            
+            // Hide the normal result sections
+            essayAnalysisSection.classList.add('hidden');
+            rcAnalysisSection.classList.add('hidden');
+
+            // Show an error message
+            resultsContentContainer.innerHTML = `
+                <div class="error-message">
+                    <h3 class="font-bold text-lg mb-2">Analysis Failed</h3>
+                    <p>Sorry, there was a problem evaluating your test. This could be a network issue or a temporary problem with the AI service.</p>
+                    <p class="mt-2 text-sm"><strong>Details:</strong> ${error.message}</p>
+                    <p class="mt-3">Please try taking the test again.</p>
+                </div>
+            `;
+        }
         
         function resetApp() {
+            // Restore original results content structure if it was replaced by an error
+            resultsContentContainer.innerHTML = `
+                 <div class="grid lg:grid-cols-2 gap-8">
+                    <section id="essay-analysis-section">
+                        <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Essay Analysis</h2>
+                        <div class="space-y-4">
+                            <div><h3>Overall Comments</h3><p id="essay-overall-comments"></p></div>
+                            <div><h3>Format & Structure</h3><p id="essay-format-feedback"></p></div>
+                            <div><h3>Content Relevance</h3><p id="essay-content-relevance"></p></div>
+                            <div><h3>Grammar & Language</h3><p id="essay-grammar-language"></p></div>
+                            <div><h3>Suggestions for Improvement</h3><ul id="essay-suggestions" class="list-disc list-inside space-y-1"></ul></div>
+                        </div>
+                    </section>
+                    <section id="rc-analysis-section">
+                        <h2 class="text-2xl font-semibold text-center mb-4 text-blue-800 font-lora">Comprehension Analysis</h2>
+                        <div class="space-y-4">
+                            <div><h3>Overall Comprehension Score</h3><p id="rc-overall-feedback"></p></div>
+                            <div id="rc-answer-feedback-container" class="space-y-3"></div>
+                        </div>
+                    </section>
+                </div>
+            `;
+            
             resultsScreen.classList.add('hidden');
             startScreen.classList.remove('hidden');
             essayArea.value = '';
@@ -432,51 +462,24 @@
                     responseSchema: {
                         type: "OBJECT",
                         properties: {
-                            essayAnalysis: {
-                                type: "OBJECT",
-                                properties: {
-                                    formatFeedback: { type: "STRING" },
-                                    contentRelevance: { type: "STRING" },
-                                    grammarAndLanguage: { type: "STRING" },
-                                    suggestionsForImprovement: { type: "ARRAY", items: { type: "STRING" } },
-                                    overallComments: { type: "STRING" }
-                                }
-                            },
-                            comprehensionAnalysis: {
-                                type: "OBJECT",
-                                properties: {
-                                    overallComprehensionFeedback: { type: "STRING", description: "A one-sentence summary of performance on the comprehension section."},
-                                    answerAnalyses: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                feedback: { type: "STRING", description: "Specific feedback on the user's answer for this question."}
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            essayAnalysis: { type: "OBJECT", properties: { formatFeedback: { type: "STRING" }, contentRelevance: { type: "STRING" }, grammarAndLanguage: { type: "STRING" }, suggestionsForImprovement: { type: "ARRAY", items: { type: "STRING" } }, overallComments: { type: "STRING" } } },
+                            comprehensionAnalysis: { type: "OBJECT", properties: { overallComprehensionFeedback: { type: "STRING" }, answerAnalyses: { type: "ARRAY", items: { type: "OBJECT", properties: { feedback: { type: "STRING" } } } } } }
                         }
                     }
                 }
             };
             
-            let response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
 
             if (!response.ok) {
                 const errorBody = await response.text();
-                throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorBody}`);
+                throw new Error(`API response was not OK: ${response.status} ${response.statusText}. Body: ${errorBody}`);
             }
 
             const result = await response.json();
             
             if (!result.candidates || !result.candidates[0].content.parts[0].text) {
-                throw new Error("Invalid response structure from API.");
+                throw new Error("Invalid response structure from API. No content found.");
             }
 
             const jsonText = result.candidates[0].content.parts[0].text;
