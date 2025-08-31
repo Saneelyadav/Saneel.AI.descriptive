@@ -373,4 +373,115 @@
 
             essayOverallComments.textContent = essayAnalysis.overallComments;
             essayFormatFeedback.textContent = essayAnalysis.formatFeedback;
-            essayContentRelevance.textContent 
+            essayContentRelevance.textContent = essayAnalysis.contentRelevance;
+            essayGrammarLanguage.textContent = essayAnalysis.grammarAndLanguage;
+            essaySuggestions.innerHTML = essayAnalysis.suggestionsForImprovement.map(s => `<li>${s}</li>`).join('');
+            
+            rcOverallFeedback.textContent = comprehensionAnalysis.overallComprehensionFeedback;
+            rcAnswerFeedbackContainer.innerHTML = '';
+            comprehensionAnalysis.answerAnalyses.forEach((ans, index) => {
+                const feedbackEl = document.createElement('div');
+                feedbackEl.className = "bg-gray-50 p-3 rounded-lg";
+                feedbackEl.innerHTML = `
+                    <p class="font-semibold text-gray-800">Feedback for Q${index + 1}:</p>
+                    <p class="text-sm">${ans.feedback}</p>
+                `;
+                rcAnswerFeedbackContainer.appendChild(feedbackEl);
+            });
+        }
+        
+        function resetApp() {
+            resultsScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            essayArea.value = '';
+            updateWordCount();
+            switchTab('essay');
+            submitBtn.disabled = true;
+        }
+
+        async function analyzeWithGemini(essayText, rcData, rcAnswers) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `You are a strict and expert evaluator for the IBPS PO Mains Descriptive English paper. Your task is to analyze a user's essay and their answers to a reading comprehension passage. Provide constructive feedback based on standard exam criteria. You MUST respond in a valid JSON format only. For comprehension, evaluate each answer based on the provided passage for correctness and clarity.`;
+
+            const rcAnswersText = rcData.questions.map((q, i) => `Question ${i+1}: ${q}\nAnswer ${i+1}: ${rcAnswers[i]}`).join('\n\n');
+
+            const userQuery = `
+                **ESSAY**
+                Topic: "${currentEssayTopic}"
+                Text:
+                ---
+                ${essayText}
+                ---
+
+                **READING COMPREHENSION**
+                Passage: "${rcData.passage}"
+                
+                Questions & User's Answers:
+                ---
+                ${rcAnswersText}
+                ---
+            `;
+            
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            essayAnalysis: {
+                                type: "OBJECT",
+                                properties: {
+                                    formatFeedback: { type: "STRING" },
+                                    contentRelevance: { type: "STRING" },
+                                    grammarAndLanguage: { type: "STRING" },
+                                    suggestionsForImprovement: { type: "ARRAY", items: { type: "STRING" } },
+                                    overallComments: { type: "STRING" }
+                                }
+                            },
+                            comprehensionAnalysis: {
+                                type: "OBJECT",
+                                properties: {
+                                    overallComprehensionFeedback: { type: "STRING", description: "A one-sentence summary of performance on the comprehension section."},
+                                    answerAnalyses: {
+                                        type: "ARRAY",
+                                        items: {
+                                            type: "OBJECT",
+                                            properties: {
+                                                feedback: { type: "STRING", description: "Specific feedback on the user's answer for this question."}
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            let response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorBody}`);
+            }
+
+            const result = await response.json();
+            
+            if (!result.candidates || !result.candidates[0].content.parts[0].text) {
+                throw new Error("Invalid response structure from API.");
+            }
+
+            const jsonText = result.candidates[0].content.parts[0].text;
+            return JSON.parse(jsonText);
+        }
+    </script>
+</body>
+</html>
