@@ -5,16 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IBPS PO Mains Descriptive Test Practice</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
     <style>
+        /* Removed Google Fonts dependency to ensure preview compatibility */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             background-color: #f1f5f9; /* slate-100 */
         }
         .font-lora {
-            font-family: 'Lora', serif;
+            font-family: Georgia, 'Times New Roman', Times, serif;
         }
         .card {
             background-color: white;
@@ -54,7 +52,7 @@
             padding: 1rem;
             max-height: 50vh;
             overflow-y: auto;
-            font-family: 'Lora', serif;
+            font-family: Georgia, 'Times New Roman', Times, serif;
         }
         .screen {
             display: none;
@@ -75,6 +73,8 @@
             <p class="text-gray-600 mb-4 text-lg">Practice Simulation</p>
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto text-left space-y-2">
                 <p><strong>Pattern:</strong> 30 minutes for Essay & Reading Comprehension.</p>
+                <p><strong>Essay Word Limit:</strong> 250 words (Typing will stop at the limit).</p>
+                <p><strong>Comprehension Answer Word Limit:</strong> 50 words per question (Typing will stop at the limit).</p>
                 <p>Click "Proceed" to select a test set.</p>
             </div>
             <button id="proceed-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg mt-6">
@@ -86,7 +86,7 @@
         <div id="test-selection-screen" class="screen card p-8 text-center">
             <div class="logo">Saneel.AI</div>
             <h2 class="text-3xl font-bold text-gray-800 mb-6 font-lora">Select a Practice Test</h2>
-            <div id="test-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div id="test-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 <!-- Test buttons will be injected here -->
             </div>
         </div>
@@ -95,7 +95,7 @@
         <div id="test-screen" class="screen card">
             <header class="p-4 bg-gray-50 flex justify-between items-center border-b border-gray-200 rounded-t-lg">
                 <h2 class="text-xl font-bold text-gray-800">Descriptive Test</h2>
-                 <div class="logo !static !top-0 !right-0">Saneel.AI</div>
+                <div class="logo !static !top-0 !right-0">Saneel.AI</div>
                 <div id="timer-container" class="bg-red-100 text-red-800 text-lg font-semibold px-4 py-2 rounded-full">
                     Time Left: <span id="timer">30:00</span>
                 </div>
@@ -108,7 +108,7 @@
                 <div id="essay-section">
                     <div class="bg-gray-100 p-4 rounded-lg mb-4"><p class="font-semibold text-gray-700">Question:</p><p id="essay-prompt" class="text-gray-900"></p></div>
                     <textarea id="essay-area" spellcheck="false" class="w-full h-[30rem] border border-gray-300 rounded-lg p-4 text-gray-700 font-lora text-base resize-none" placeholder="Start writing your essay here..."></textarea>
-                    <p class="text-right text-sm text-gray-500 mt-1">Word Count: <span id="essay-word-count">0</span></p>
+                    <p class="text-right text-sm text-gray-500 mt-1">Words Remaining: <span id="essay-word-count">250</span></p>
                 </div>
                 <div id="rc-section" class="hidden h-[33rem] overflow-y-auto pr-2">
                     <div class="bg-gray-100 p-4 rounded-lg mb-4"><p class="font-semibold text-gray-700 mb-2">Read the following passage carefully and answer the questions that follow:</p><p id="rc-passage" class="text-gray-800 font-lora text-base leading-relaxed"></p></div>
@@ -123,12 +123,12 @@
         <!-- Copy Content Screen -->
         <div id="copy-content-screen" class="screen card p-8">
             <div class="logo">Saneel.AI</div>
-            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800 font-lora">Test Submitted Successfully</h2>
-            <p class="text-center text-gray-600 mb-6">Copy your responses below to analyze them with an external tool.</p>
+            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800 font-lora">Test Complete!</h2>
+            <p class="text-center text-gray-600 mb-6">Copy your answers and paste them into your favorite AI chatbot for evaluation and marks.</p>
             <pre id="final-content-display"></pre>
             <div class="flex justify-center items-center gap-4 mt-8">
-                <button id="copy-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg">Copy to Clipboard</button>
-                <button id="try-again-btn" class="bg-gray-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-gray-700 transition-colors shadow-md text-lg">Take Another Test</button>
+                <button id="copy-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors shadow-md text-lg">Copy Answers for Evaluation</button>
+                <button id="try-again-btn" class="bg-slate-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-slate-600 transition-colors shadow-md text-base">Take Another Test</button>
             </div>
         </div>
     </div>
@@ -157,13 +157,21 @@
         let timerInterval;
         let currentTestSet;
         const TEST_DURATION_SECONDS = 1800; // 30 minutes
+        const ESSAY_MAX_WORDS = 250;
+        const RC_MAX_WORDS = 50;
 
-        // --- All Test Content (UPDATED with 5 questions each) ---
+        // --- All Test Content ---
         const testSets = [
-            { name: "Test 1", essayTopic: "Impact of Artificial Intelligence on the Indian Banking Sector.", comprehension: { passage: "The Reserve Bank of India (RBI) has been the cornerstone of the country's financial system since its establishment in 1935. Its primary objective is to maintain monetary stability. Beyond its traditional role, it now acts as a regulator and supervisor of the banking and financial systems, a manager of foreign exchange, and a developmental agency promoting financial inclusion. One of the RBI's most critical tools is the monetary policy, through which it influences interest rates to control inflation and stimulate economic growth.", questions: ["What is the primary objective of the RBI?", "Name three functions of the RBI beyond its traditional role.", "What is the main purpose of the RBI's monetary policy?", "How does the RBI promote financial inclusion according to the passage?", "When was the RBI established?"] }},
-            { name: "Test 2", essayTopic: "The Gig Economy in India: Pros and Cons.", comprehension: { passage: "Financial inclusion is ensuring access to appropriate financial products for all sections of society, particularly vulnerable groups. In India, the Pradhan Mantri Jan Dhan Yojana (PMJDY), launched in 2014, has been a game-changer. The scheme brought a large portion of the unbanked population into the formal financial system by providing a basic savings bank account, and access to credit and insurance. While progress has been made, challenges such as low account usage in rural areas and the need for financial literacy remain.", questions: ["Define 'financial inclusion' based on the passage.", "What scheme was launched in 2014 to promote financial inclusion?", "What are two remaining challenges in achieving full financial inclusion?", "What specific services are provided through the PMJDY scheme?", "Which groups are specifically mentioned as vulnerable?"] }},
-            { name: "Test 3", essayTopic: "The Role of Digital Payments in achieving a Cashless Society.", comprehension: { passage: "The Monetary Policy Committee (MPC), established in 2016, is responsible for fixing the benchmark policy rate (repo rate) required to achieve the inflation target. This shift to an inflation-targeting framework has brought more transparency and accountability to India's monetary policy decisions. The committee comprises six members: three from the RBI and three appointed by the central government. Decisions are made by majority vote, with the RBI Governor having a casting vote in case of a tie.", questions: ["What is the primary responsibility of the MPC?", "How has the MPC framework improved India's monetary policy?", "How are decisions made in the MPC, especially in case of a tie?", "When was the MPC established?", "What is the composition of the MPC in terms of its members?"] }},
-            { name: "Test 4", essayTopic: "Privatization of Public Sector Banks: A Boon or a Bane?", comprehension: { passage: "Non-Performing Assets (NPAs) are loans or advances for which the principal or interest payment remained overdue for a period of 90 days. A high level of NPAs affects a bank's profitability and can erode its capital base. The Insolvency and Bankruptcy Code (IBC) was enacted in 2016 to create a consolidated framework that would resolve insolvency in a time-bound manner. The IBC has been a significant step in cleaning up the balance sheets of Indian banks and improving the credit culture.", questions: ["What is a Non-Performing Asset (NPA)?", "How does a high level of NPAs impact a bank?", "What was the purpose of enacting the Insolvency and Bankruptcy Code (IBC)?", "What is the time period after which a loan is classified as an NPA?", "What has been a significant outcome of the IBC according to the passage?"] }}
+            { name: "Test 1", essayTopic: "Analyze the impact of the Insolvency and Bankruptcy Code (IBC), 2016 on the Indian banking sector. Discuss how it has helped in resolving Non-Performing Assets (NPAs) and what challenges remain in its implementation.", comprehension: { passage: "The convergence of Artificial Intelligence (AI) and banking has catalyzed a paradigm shift in India's financial landscape. AI-driven algorithms are now instrumental in functions ranging from credit scoring and fraud detection to personalized customer service through chatbots. This integration promises enhanced operational efficiency, reduced human error, and improved risk management. However, this technological leap is not without its challenges. Concerns around data privacy, the potential for algorithmic bias in lending decisions, and the significant capital investment required for implementation pose considerable hurdles. Furthermore, the displacement of traditional banking jobs necessitates a robust strategy for reskilling the workforce to adapt to new, technology-centric roles, ensuring a just and equitable transition for all stakeholders in the sector.", questions: ["What are three primary applications of AI in the Indian banking sector mentioned in the passage?", "What are the dual challenges related to algorithms that banks face when implementing AI?", "According to the passage, what is required to manage the impact of AI on banking employment?", "How does AI promise to improve risk management for financial institutions?", "What potential negative consequence does the passage associate with the use of AI in lending?"] }},
+            { name: "Test 2", essayTopic: "\"Women's empowerment is key to India's progress.\" Justify this statement by discussing how empowering women in social, economic, and political spheres can accelerate national development. What are the major obstacles still hindering this progress?", comprehension: { passage: "India's gig economy, characterized by short-term contracts and freelance work as opposed to permanent jobs, has expanded rapidly, fueled by digital platforms connecting service providers with consumers. This model offers unparalleled flexibility for workers, allowing them to manage their own schedules and work from various locations. For businesses, it provides access to a diverse talent pool without the overheads of traditional employment. However, this flexibility comes at a cost. Gig workers often lack the social security benefits, such as health insurance and retirement funds, that are standard in formal employment. The absence of a steady income stream and the constant need to seek new projects can lead to financial instability and mental stress, raising critical questions about labor rights and the need for a new regulatory framework.", questions: ["What fundamental characteristic defines the gig economy according to the passage?", "List two advantages of the gig economy, one for workers and one for businesses.", "What critical social security benefits are gig workers often deprived of?", "What factors contribute to potential financial instability for a gig worker?", "What does the passage suggest is necessary to address the challenges faced by gig workers?"] }},
+            { name: "Test 3", essayTopic: "Describe the multifaceted crisis of climate change and its specific impact on India, considering factors like erratic monsoons, rising sea levels, and agricultural distress. What urgent measures should India prioritize on a national and international level?", comprehension: { passage: "The transition towards a 'less-cash' society in India has been significantly accelerated by the proliferation of digital payment systems. Unified Payments Interface (UPI), mobile wallets, and QR code-based transactions have offered unprecedented convenience, speed, and transparency. This shift not only curbs the circulation of black money but also creates a digital trail that can enhance tax compliance and formalize the economy. Despite these advancements, the journey to a truly cashless economy is fraught with obstacles. A persistent digital divide, particularly in rural and semi-urban areas, limits access for a large segment of the population. Concerns over cybersecurity, including data breaches and online fraud, also foster mistrust among potential users, while the reliance on technological infrastructure makes the system vulnerable to service disruptions.", questions: ["What are two major benefits of transitioning to a 'less-cash' society mentioned in the passage?", "Identify the primary obstacle limiting the adoption of digital payments in rural India.", "What specific security concerns are highlighted as a barrier to the growth of digital payments?", "How has the Unified Payments Interface (UPI) contributed to this economic shift?", "What vulnerability is inherent in a system that relies heavily on technological infrastructure?"] }},
+            { name: "Test 4", essayTopic: "Analyze the 'Make in India' initiative as a pathway to self-reliance ('Aatmanirbharta'). Evaluate its successes in boosting domestic manufacturing and attracting investment, and discuss the persistent challenges that need to be addressed to realize its full potential.", comprehension: { passage: "The debate surrounding the privatization of Public Sector Banks (PSBs) in India is multifaceted, balancing the pursuit of efficiency against social objectives. Proponents argue that privatization would instill market discipline, leading to better corporate governance, improved profitability, and a reduction in the government's fiscal burden from repeated capital infusions. Private ownership, it is claimed, would foster innovation and a more customer-centric approach. Conversely, opponents raise concerns about financial exclusion. PSBs have historically played a crucial role in extending banking services to remote and underserved regions and implementing government welfare schemes. There is a palpable fear that a profit-driven private sector approach might neglect these social responsibilities, potentially widening the gap between the banked and the unbanked and compromising the nation's inclusive growth agenda.", questions: ["What is the main argument in favor of privatizing Public Sector Banks?", "What specific social role have PSBs traditionally fulfilled, according to the passage?", "What is the primary fear associated with the potential impact of privatization on financial inclusion?", "How do proponents believe privatization would affect the government's financial responsibilities?", "What potential shift in business approach is expected from private ownership of banks?"] }},
+            { name: "Test 5", essayTopic: "Discuss the importance of financial literacy for the economic development of India. Elaborate on the challenges in spreading financial awareness and suggest measures that banks and the government can take to improve it.", comprehension: { passage: "Social media has fundamentally reshaped communication and social interaction on a global scale. Platforms like Facebook, Twitter, and Instagram provide powerful tools for connection, allowing individuals to maintain relationships across vast distances and form communities based on shared interests. They serve as potent channels for information dissemination, civic engagement, and social movements. However, this hyper-connectivity has a dark side. The proliferation of misinformation and 'fake news' can manipulate public opinion and erode trust in institutions. Moreover, the curated nature of online personas often contributes to mental health issues, such as anxiety and depression, stemming from social comparison and cyberbullying. The algorithmic amplification of polarizing content further exacerbates social divisions, creating echo chambers that hinder constructive dialogue.", questions: ["What are two positive functions of social media mentioned in the passage, beyond simple connection?", "How does the passage link social media to the erosion of institutional trust?", "What specific mental health challenges are associated with social media use?", "Explain the concept of 'echo chambers' in the context of social media algorithms.", "What does the term 'curated nature of online personas' imply?"] }},
+            { name: "Test 6", essayTopic: "Examine the role of Small and Medium Enterprises (SMEs) as the backbone of the Indian economy. Discuss their contribution to employment and GDP, and the major hurdles they face in terms of credit access and infrastructure.", comprehension: { passage: "The landscape of education in India is undergoing a dramatic transformation with the rise of e-learning. Digital platforms offer personalized learning paths, access to a vast repository of educational resources, and the flexibility to learn from anywhere, breaking down geographical barriers that have long constrained access to quality education. This model is particularly beneficial for working professionals seeking to upskill and students in remote areas. However, for e-learning to truly become the future, it must overcome significant hurdles. The digital divide, marked by unequal access to high-speed internet and compatible devices, remains a primary concern. Furthermore, ensuring the quality and credibility of online courses, and developing effective digital pedagogy that goes beyond simple content delivery, are critical challenges that need to be addressed for its sustainable growth.", questions: ["What are two key advantages of e-learning that break traditional educational constraints?", "Who are the two specific groups of beneficiaries of e-learning mentioned in the passage?", "What is meant by the 'digital divide' in the context of e-learning in India?", "Beyond access, what are two other critical challenges facing the e-learning sector?", "What is the difference between simple content delivery and effective digital pedagogy as implied in the text?"] }},
+            { name: "Test 7", essayTopic: "Write an essay on the problem of plastic pollution in India. Detail its severe environmental consequences and suggest a comprehensive strategy involving government policies, corporate responsibility, and citizen participation to tackle this menace.", comprehension: { passage: "The e-commerce sector in India has emerged as a powerful engine of economic growth, fundamentally altering the retail landscape. It has provided small and medium enterprises (SMEs) with unprecedented access to a nationwide market, reducing their dependence on traditional, localized distribution channels. For consumers, e-commerce platforms offer a wider selection of goods, competitive pricing, and the convenience of doorstep delivery. This boom has also spurred significant job creation in ancillary sectors like logistics, warehousing, and digital marketing. Despite its positive impact, the sector faces scrutiny over its business practices. Allegations of deep discounting creating an unlevel playing field, complexities in the FDI policy, and the environmental impact of extensive packaging and transportation are pressing issues that require regulatory attention.", questions: ["How has e-commerce specifically benefited Small and Medium Enterprises (SMEs) in India?", "Besides retail, name two other sectors that have experienced job growth due to the e-commerce boom.", "What are two major criticisms or challenges currently facing the e-commerce industry?", "What primary advantages does e-commerce offer to the end consumer?", "What does the term 'unlevel playing field' refer to in the context of e-commerce practices?"] }},
+            { name: "Test 8", essayTopic: "Elaborate on the 'Viksit Bharat @ 2047' initiative. What are the key pillars of this vision for India's development as it approaches 100 years of independence, and what are the major socio-economic challenges that must be overcome to achieve this ambitious goal?", comprehension: { passage: "India's digital commerce landscape is being reshaped by the Open Network for Digital Commerce (ONDC), a government-backed initiative designed to democratize e-commerce. Unlike platform-centric models like Amazon or Flipkart where the platform controls the user experience and seller participation, ONDC is an open network. It unbundles the different aspects of e-commerce, such as cataloging, ordering, and logistics, allowing different specialized companies to handle each part. The goal is to create a level playing field for small sellers, increase consumer choice, and foster innovation by breaking down the silos of proprietary platforms. However, its success hinges on widespread adoption by both sellers and consumers, ensuring interoperability between various applications, and establishing robust mechanisms for grievance redressal.", questions: ["What is the fundamental difference between ONDC and platform-centric e-commerce models?", "According to the passage, how does ONDC aim to benefit small sellers?", "What are the three main components of e-commerce that ONDC 'unbundles'?", "List two critical factors that will determine the success of the ONDC initiative.", "What is the primary objective behind creating this open network for digital commerce?"] }},
+            { name: "Test 9", essayTopic: "The rise of digital banking and insurance is transforming India's financial sector. Discuss the benefits this brings in terms of financial inclusion and convenience. What are the associated risks, particularly concerning cybersecurity and data privacy for consumers?", comprehension: { passage: "Non-Performing Assets (NPAs) are loans or advances for which the principal or interest payment remained overdue for a period of 90 days. A high level of NPAs affects a bank's profitability and can erode its capital base. The Insolvency and Bankruptcy Code (IBC) was enacted in 2016 to create a consolidated framework that would resolve insolvency in a time-bound manner. The IBC has been a significant step in cleaning up the balance sheets of Indian banks and improving the credit culture.", questions: ["What is a Non-Performing Asset (NPA)?", "How does a high level of NPAs impact a bank?", "What was the purpose of enacting the Insolvency and Bankruptcy Code (IBC)?", "What is the time period after which a loan is classified as an NPA?", "What has been a significant outcome of the IBC according to the passage?"] }},
+            { name: "Test 10", essayTopic: "\"Reaching for the Stars.\" Reflect on India's recent achievements in space exploration, such as the Chandrayaan and Gaganyaan missions. Discuss how these accomplishments boost national pride, drive scientific innovation, and position India as a leading power in the global space community.", comprehension: { passage: "Financial inclusion is ensuring access to appropriate financial products for all sections of society, particularly vulnerable groups. In India, the Pradhan Mantri Jan Dhan Yojana (PMJDY), launched in 2014, has been a game-changer. The scheme brought a large portion of the unbanked population into the formal financial system by providing a basic savings bank account, and access to credit and insurance. While progress has been made, challenges such as low account usage in rural areas and the need for financial literacy remain.", questions: ["Define 'financial inclusion' based on the passage.", "What scheme was launched in 2014 to promote financial inclusion?", "What are two remaining challenges in achieving full financial inclusion?", "What specific services are provided through the PMJDY scheme?", "Which groups are specifically mentioned as vulnerable?"] }}
         ];
 
         // --- Central function to manage screen visibility ---
@@ -180,8 +188,10 @@
         copyBtn.addEventListener('click', copyContentToClipboard);
         essayTabBtn.addEventListener('click', () => switchTab('essay'));
         rcTabBtn.addEventListener('click', () => switchTab('rc'));
-        essayArea.addEventListener('input', () => {
-            updateWordCount();
+        
+        essayArea.addEventListener('keydown', (e) => enforceWordLimit(e, ESSAY_MAX_WORDS));
+        essayArea.addEventListener('input', (e) => {
+            updateWordCountDisplay(e.target, essayWordCountEl, ESSAY_MAX_WORDS);
             updateSubmitButtonState();
         });
 
@@ -196,36 +206,37 @@
             });
         }
 
-        // --- UPDATED: This function is changed to include word counters ---
         function startTest(testIndex) {
             currentTestSet = testSets[testIndex];
-            
             showScreen('test-screen');
-            
             essayPromptEl.textContent = currentTestSet.essayTopic;
             rcPassageEl.textContent = currentTestSet.comprehension.passage;
             rcQuestionsContainer.innerHTML = '';
+            essayArea.value = '';
+            updateWordCountDisplay(essayArea, essayWordCountEl, ESSAY_MAX_WORDS);
+
             currentTestSet.comprehension.questions.forEach((q, index) => {
                 const questionBlock = document.createElement('div');
-                
                 const questionText = document.createElement('p');
                 questionText.className = "font-semibold text-gray-700 mb-1";
                 questionText.textContent = `Q${index + 1}: ${q}`;
-                
                 const textArea = document.createElement('textarea');
                 textArea.id = `rc-a${index}`;
                 textArea.spellcheck = false;
                 textArea.className = "w-full h-24 border border-gray-300 rounded-lg p-2 text-gray-700 font-lora text-base resize-none";
                 textArea.placeholder = `Write your answer for Q${index + 1}...`;
-                textArea.addEventListener('input', () => {
-                    updateRcWordCount(index);
-                    updateSubmitButtonState();
-                });
-
                 const wordCountContainer = document.createElement('div');
                 wordCountContainer.className = 'text-right text-sm text-gray-500 mt-1';
-                wordCountContainer.innerHTML = `Word Count: <span id="rc-word-count-${index}">0</span>`;
-
+                const wordCountSpan = document.createElement('span');
+                wordCountSpan.id = `rc-word-count-${index}`;
+                wordCountSpan.textContent = RC_MAX_WORDS;
+                wordCountContainer.innerHTML = 'Words Remaining: ';
+                wordCountContainer.appendChild(wordCountSpan);
+                textArea.addEventListener('keydown', (e) => enforceWordLimit(e, RC_MAX_WORDS));
+                textArea.addEventListener('input', (e) => {
+                    updateWordCountDisplay(e.target, wordCountSpan, RC_MAX_WORDS);
+                    updateSubmitButtonState();
+                });
                 questionBlock.appendChild(questionText);
                 questionBlock.appendChild(textArea);
                 questionBlock.appendChild(wordCountContainer);
@@ -234,6 +245,7 @@
             
             let timeLeft = TEST_DURATION_SECONDS;
             updateTimerDisplay(timeLeft);
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 timeLeft--;
                 updateTimerDisplay(timeLeft);
@@ -258,11 +270,39 @@
             const essayText = essayArea.value;
             const rcPassage = currentTestSet.comprehension.passage;
             const rcAnswers = currentTestSet.comprehension.questions.map((q, index) => {
-                const answerText = document.getElementById(`rc-a${index}`).value;
+                const answerTextArea = document.getElementById(`rc-a${index}`);
+                const answerText = answerTextArea ? answerTextArea.value : 'Not Answered';
                 return `Question ${index + 1}: ${q}\nAnswer: ${answerText || 'Not Answered'}`;
             }).join('\n\n');
 
-            const fullContent = `IBPS PO Mains Descriptive Practice\n================================\n\nEssay Topic:\n${currentTestSet.essayTopic}\n\nMy Essay:\n${essayText || 'Not Answered'}\n\n================================\n\nReading Comprehension Passage:\n${rcPassage}\n\nMy Answers:\n${rcAnswers}\n`;
+            const fullContent = `--- PROMPT FOR AI EVALUATOR ---
+Please act as an expert evaluator for the IBPS PO Mains Descriptive English paper. The total marks for this test are 25. Evaluate the following answers based on the standard criteria for this exam, which include content relevance, structure, grammatical accuracy, vocabulary, and adherence to word limits. Provide a detailed score breakdown for the Essay and each Reading Comprehension question, along with constructive feedback.
+
+Test Type: IBPS PO Mains Descriptive Paper
+Evaluation Request: Score the answers out of 25 marks and provide feedback.
+--- END OF PROMPT ---
+
+================================
+IBPS PO MAINS DESCRIPTIVE TEST
+================================
+
+Essay Topic:
+${currentTestSet.essayTopic}
+(Word Limit: 250 words)
+
+My Essay:
+${essayText || 'Not Answered'}
+
+--------------------------------
+
+Reading Comprehension Passage:
+${rcPassage}
+
+My Answers:
+(Word Limit: 50 words per question)
+
+${rcAnswers}
+`;
             
             finalContentDisplay.textContent = fullContent;
             showScreen('copy-content-screen');
@@ -279,10 +319,13 @@
             try {
                 document.execCommand('copy');
                 copyBtn.textContent = 'Copied!';
-                copyBtn.classList.replace('bg-blue-600', 'bg-green-600');
+                copyBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                copyBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                
                 setTimeout(() => {
-                    copyBtn.textContent = 'Copy to Clipboard';
-                    copyBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                    copyBtn.textContent = 'Copy Answers for Evaluation';
+                    copyBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    copyBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 }, 2000);
             } catch (err) {
                 console.error('Fallback: Oops, unable to copy', err);
@@ -291,9 +334,11 @@
         }
         
         function resetApp() {
+            clearInterval(timerInterval);
+            timerEl.textContent = "30:00";
             showScreen('start-screen');
             essayArea.value = '';
-            updateWordCount();
+            updateWordCountDisplay(essayArea, essayWordCountEl, ESSAY_MAX_WORDS);
             switchTab('essay');
             submitBtn.disabled = true;
         }
@@ -319,19 +364,36 @@
             submitBtn.disabled = !hasContent;
         }
 
-        function updateWordCount() {
-            const words = essayArea.value.trim().split(/\s+/).filter(word => word.length > 0);
-            essayWordCountEl.textContent = words.length;
+        function enforceWordLimit(event, maxWords) {
+            const textArea = event.target;
+            const text = textArea.value;
+            const words = text.match(/\S+/g) || [];
+            const allowedKeys = [
+                'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+                'Home', 'End', 'Tab', 'Enter'
+            ];
+            if (event.ctrlKey || event.metaKey || event.altKey) {
+                return;
+            }
+            if (words.length >= maxWords && !allowedKeys.includes(event.key)) {
+                if (textArea.selectionStart === textArea.selectionEnd) {
+                    event.preventDefault();
+                }
+            }
         }
 
-        // --- NEW: Function to update word count for RC answers ---
-        function updateRcWordCount(index) {
-            const textArea = document.getElementById(`rc-a${index}`);
-            const wordCountEl = document.getElementById(`rc-word-count-${index}`);
-            if (textArea && wordCountEl) {
-                const words = textArea.value.trim().split(/\s+/).filter(word => word.length > 0);
-                wordCountEl.textContent = words.length;
+        function updateWordCountDisplay(textArea, wordCountEl, maxWords) {
+            let text = textArea.value;
+            let words = text.match(/\S+/g) || [];
+            if (words.length > maxWords) {
+                const trimmedText = words.slice(0, maxWords).join(' ');
+                textArea.value = trimmedText;
+                words = textArea.value.match(/\S+/g) || [];
             }
+            const remaining = maxWords - words.length;
+            wordCountEl.textContent = remaining;
+            wordCountEl.parentElement.classList.toggle('text-red-600', remaining <= 0);
+            wordCountEl.parentElement.classList.toggle('text-gray-500', remaining > 0);
         }
 
         // --- Initial Setup ---
